@@ -114,6 +114,8 @@ function Main {
 
     # Ollama API will be served on http://localhost:11434
     # ollama run $OLLAMA_MODEL_PULL
+
+    # TODO add virtual environment management
 }
 
 Main

@@ -23,7 +23,9 @@ OLLAMA_TMP_DIR="$OLLAMA_PROJECT_DIR/tmp"
 OLLAMA_EXE_URL="$OLLAMA_GITHUB_REL/$OLLAMA_VERSION/ollama-linux-amd64.tgz"
 OLLAMA_EXE_TAR="$OLLAMA_TMP_DIR/ollama.tgz"
 
-export CUDA_VISIBLE_DEVICES="0"
+export OLLAMA_VULKAN=false
+export OLLAMA_LLM_LIBRARY=cuda
+export CUDA_VISIBLE_DEVICES=0
 export OLLAMA_MODELS="$OLLAMA_PROJECT_DIR/models"
 
 # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -42,6 +44,7 @@ initialize_add_to_path() {
     local directory="$1"
 
     if [[ -d "$directory" ]]; then
+        echo "Prepending missing path to environment: $directory"
         if ! test_in_path "$directory"; then
             export PATH="$directory:$PATH"
         fi
@@ -56,7 +59,8 @@ initialize_add_to_path() {
 
 main() {
     initialize_add_to_path "$OLLAMA_BIN_DIR/bin"
-    initialize_add_to_path "$OLLAMA_BIN_DIR/lib"
+    export LD_LIBRARY_PATH="$OLLAMA_BIN_DIR/lib/ollama:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH="$OLLAMA_BIN_DIR/lib/ollama/cuda_v12:$LD_LIBRARY_PATH"
 
     # Ensure required directories exist:
     [[ ! -d "$OLLAMA_BIN_DIR" ]] && mkdir -p "$OLLAMA_BIN_DIR"
@@ -92,9 +96,14 @@ main() {
         ollama pull "$OLLAMA_MODEL_PULL"
     fi
 
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
+    if [[ -d ".venv" ]]; then
+        echo "Virtual environment already exists..."
+    else
+        echo "Creating virtual environment..."
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+    fi
 
     # Ollama API is served on http://localhost:11434
     # ollama run $OLLAMA_MODEL_PULL
