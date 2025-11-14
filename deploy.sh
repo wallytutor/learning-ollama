@@ -20,8 +20,8 @@ OLLAMA_PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OLLAMA_BIN_DIR="$OLLAMA_PROJECT_DIR/bin"
 OLLAMA_TMP_DIR="$OLLAMA_PROJECT_DIR/tmp"
 
-OLLAMA_EXECUTABLE_URL="$OLLAMA_GITHUB_REL/$OLLAMA_VERSION/ollama-linux-amd64.tgz"
-OLLAMA_EXECUTABLE_TAR="$OLLAMA_TMP_DIR/ollama.tgz"
+OLLAMA_EXE_URL="$OLLAMA_GITHUB_REL/$OLLAMA_VERSION/ollama-linux-amd64.tgz"
+OLLAMA_EXE_TAR="$OLLAMA_TMP_DIR/ollama.tgz"
 
 export CUDA_VISIBLE_DEVICES="0"
 export OLLAMA_MODELS="$OLLAMA_PROJECT_DIR/models"
@@ -64,14 +64,14 @@ main() {
     [[ ! -d "$OLLAMA_MODELS"  ]] && mkdir -p "$OLLAMA_MODELS"
 
     # Download and extract if required:
-    if [[ ! -f "$OLLAMA_EXECUTABLE_TAR" ]]; then
+    if [[ ! -f "$OLLAMA_EXE_TAR" ]]; then
         echo "Downloading Ollama..."
-        curl -L -o "$OLLAMA_EXECUTABLE_TAR" "$OLLAMA_EXECUTABLE_URL"
+        curl -L -o "$OLLAMA_EXE_TAR" "$OLLAMA_EXE_URL"
     fi
 
     if [[ ! -f "$OLLAMA_BIN_DIR/bin/ollama" ]]; then
         echo "Extracting Ollama..."
-        tar -xzf "$OLLAMA_EXECUTABLE_TAR" -C "$OLLAMA_BIN_DIR"
+        tar -xzf "$OLLAMA_EXE_TAR" -C "$OLLAMA_BIN_DIR"
         chmod +x "$OLLAMA_BIN_DIR/bin/ollama"
     fi
 
@@ -92,8 +92,12 @@ main() {
         ollama pull "$OLLAMA_MODEL_PULL"
     fi
 
-    # echo "Ollama API is served on http://localhost:11434"
-    # echo "To run the model interactively: ollama run $OLLAMA_MODEL_PULL"
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+
+    # Ollama API is served on http://localhost:11434
+    # ollama run $OLLAMA_MODEL_PULL
 }
 
 main

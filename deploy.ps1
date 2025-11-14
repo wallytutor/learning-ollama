@@ -8,19 +8,19 @@ param ()
 # Global configuration
 # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-$OLLAMA_MODEL_PULL     = "llama3.1:8b"
-# $OLLAMA_MODEL_PULL     = "llama3.1:70b"
-# $OLLAMA_MODEL_PULL     = "llama3.1:405b"
+# $OLLAMA_MODEL_PULL  = "llama3.1:405b"
+# $OLLAMA_MODEL_PULL  = "llama3.1:70b"
+$OLLAMA_MODEL_PULL  = "llama3.1:8b"
 
-$OLLAMA_VERSION        = "v0.12.11"
-$OLLAMA_GITHUB_REL     = "https://github.com/ollama/ollama/releases/download/"
+$OLLAMA_VERSION     = "v0.12.11"
+$OLLAMA_GITHUB_REL  = "https://github.com/ollama/ollama/releases/download/"
 
-$OLLAMA_PROJECT_DIR    = "$PsScriptRoot"
-$OLLAMA_BIN_DIR        = "$OLLAMA_PROJECT_DIR\bin"
-$OLLAMA_TMP_DIR        = "$OLLAMA_PROJECT_DIR\tmp"
+$OLLAMA_PROJECT_DIR = "$PsScriptRoot"
+$OLLAMA_BIN_DIR     = "$OLLAMA_PROJECT_DIR\bin"
+$OLLAMA_TMP_DIR     = "$OLLAMA_PROJECT_DIR\tmp"
 
-$OLLAMA_EXECUTABLE_URL = "$OLLAMA_GITHUB_REL/$OLLAMA_VERSION/ollama-windows-amd64.zip"
-$OLLAMA_EXECUTABLE_ZIP = "$OLLAMA_TMP_DIR\ollama.zip"
+$OLLAMA_EXE_URL     = "$OLLAMA_GITHUB_REL/$OLLAMA_VERSION/ollama-windows-amd64.zip"
+$OLLAMA_EXE_ZIP     = "$OLLAMA_TMP_DIR\ollama.zip"
 
 $env:CUDA_VISIBLE_DEVICES ="0"
 $env:OLLAMA_MODELS        = "$OLLAMA_PROJECT_DIR\models"
@@ -60,7 +60,6 @@ function Initialize-AddToPath() {
 function Main {
     Initialize-AddToPath "$OLLAMA_BIN_DIR"
     # Initialize-AddToPath "$OLLAMA_BIN_DIR\lib"
-    # Initialize-AddToPath "$OLLAMA_BIN_DIR\lib"
 
     & { # Ensure required directories exist:
         if (!(Test-Path -Path $OLLAMA_BIN_DIR)) {
@@ -77,16 +76,16 @@ function Main {
     }
 
     & { # Download and extract if required:
-        if (!(Test-Path -Path $OLLAMA_EXECUTABLE_ZIP)) {
+        if (!(Test-Path -Path $OLLAMA_EXE_ZIP)) {
             Start-BitsTransfer `
-                -Source      $OLLAMA_EXECUTABLE_URL `
-                -Destination $OLLAMA_EXECUTABLE_ZIP `
+                -Source      $OLLAMA_EXE_URL `
+                -Destination $OLLAMA_EXE_ZIP `
                 -ErrorAction Stop
         }
 
         if (!(Test-Path -Path "$OLLAMA_BIN_DIR\ollama.exe")) {
             Expand-Archive `
-                -Path            $OLLAMA_EXECUTABLE_ZIP `
+                -Path            $OLLAMA_EXE_ZIP `
                 -DestinationPath $OLLAMA_BIN_DIR
         }
     }
@@ -114,7 +113,7 @@ function Main {
     }
 
     # Ollama API will be served on http://localhost:11434
-    # ollama run llama3.1:8b
+    # ollama run $OLLAMA_MODEL_PULL
 }
 
 Main
