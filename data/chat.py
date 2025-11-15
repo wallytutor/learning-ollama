@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from xml.parsers.expat import model
 import streamlit as st
 import ollama
 
@@ -13,10 +14,19 @@ def chat(prompt: str) -> str:
         "messages": [{"role": "user", "content": prompt}],
         "options": {"keep_alive": OLLAMA_ALIVE}
     }
-    response = ollama.chat(**config)
 
-    if 'message' in response and 'content' in response['message']:
-        return response['message']['content']
+    response = {}
+
+    try:
+        response = ollama.chat(**config)
+    except ollama.ResponseError as e:
+        print("Error:", e.error)
+
+        if e.status_code == 404:
+            ollama.pull(model=OLLAMA_MODEL)
+
+    if "message" in response and "content" in response["message"]:
+        return response["message"]["content"]
 
     return "Sorry, I couldn't get a response."
 
