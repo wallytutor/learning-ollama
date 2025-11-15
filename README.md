@@ -2,7 +2,23 @@
 
 Testing [Ollama](https://ollama.com/) for local deployment.
 
-Currently using [llama3.1](https://ollama.com/library/llama3.1).
+## References
+
+Platforms:
+
+- [Ollama](https://ollama.com/)
+- [HuggingFace](https://huggingface.co/)
+
+Models:
+
+- [llama3.1](https://ollama.com/library/llama3.1).
+- [mistral-nemo](https://ollama.com/library/mistral-nemo)
+
+Packages:
+
+- [ollama](https://github.com/ollama/ollama-python)
+- [haystack](https://docs.haystack.deepset.ai/docs/intro)
+- [weaviate](https://docs.weaviate.io/weaviate/quickstart)
 
 ## Deploying in RHEL
 

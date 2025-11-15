@@ -9,7 +9,8 @@ set -e
 # Global configuration
 # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-OLLAMA_MODEL_PULL="llama3.1:8b"
+OLLAMA_MODEL_PULL="mistral-nemo:12b"
+# OLLAMA_MODEL_PULL="llama3.1:8b"
 # OLLAMA_MODEL_PULL="llama3.1:70b"
 # OLLAMA_MODEL_PULL="llama3.1:405b"
 
@@ -19,6 +20,7 @@ OLLAMA_GITHUB_REL="https://github.com/ollama/ollama/releases/download/"
 OLLAMA_PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OLLAMA_BIN_DIR="$OLLAMA_PROJECT_DIR/bin"
 OLLAMA_TMP_DIR="$OLLAMA_PROJECT_DIR/tmp"
+OLLAMA_ENV_DIR="$OLLAMA_PROJECT_DIR/.venv"
 
 OLLAMA_EXE_URL="$OLLAMA_GITHUB_REL/$OLLAMA_VERSION/ollama-linux-amd64.tgz"
 OLLAMA_EXE_TAR="$OLLAMA_TMP_DIR/ollama.tgz"
@@ -30,7 +32,7 @@ export OLLAMA_MODELS="$OLLAMA_PROJECT_DIR/models"
 # Helper functions
 # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-test_in_path() {
+function test_in_path() {
     local directory="$1"
     case ":$PATH:" in
         *":$directory:"*) return 0 ;;
@@ -38,7 +40,7 @@ test_in_path() {
     esac
 }
 
-initialize_add_to_path() {
+function initialize_add_to_path() {
     local directory="$1"
 
     if [[ -d "$directory" ]]; then
@@ -48,6 +50,69 @@ initialize_add_to_path() {
         fi
     else
         echo "Not prepending missing path to environment: $directory"
+    fi
+}
+
+function start_ollama_server() {
+    # Ollama API is served on http://localhost:11434
+    if pgrep -x "ollama" > /dev/null; then
+        echo "Ollama is already running..."
+    else
+        echo "Starting Ollama server..."
+        ollama serve &
+        sleep 2  # Give the server a moment to start
+    fi
+}
+
+function stop_ollama_server() {
+    if pgrep -x "ollama" > /dev/null; then
+        echo "Stopping Ollama server..."
+        kill -9 "$(pgrep -x "ollama")"
+    else
+        echo "Ollama server is not running..."
+    fi
+}
+
+function pull_ollama_model() {
+    if ollama list | grep -q "$OLLAMA_MODEL_PULL"; then
+        echo "$OLLAMA_MODEL_PULL model already pulled..."
+    else
+        echo "Pulling model $OLLAMA_MODEL_PULL..."
+        ollama pull "$OLLAMA_MODEL_PULL"
+    fi
+}
+
+function run_ollama_model() {
+    start_server
+    ollama run $OLLAMA_MODEL_PULL
+}
+
+function activate_venv() {
+    venv=$OLLAMA_ENV_DIR
+
+    if [[ -d "$venv" ]]; then
+        echo "Activating virtual environment..."
+        source "$venv/bin/activate"
+    else
+        echo "Virtual environment does not exist. Please create it first."
+        exit 1
+    fi
+}
+
+function create_venv() {
+    venv=$OLLAMA_ENV_DIR
+
+    if [[ -d "$venv" ]]; then
+        echo "Virtual environment already exists..."
+    else
+        echo "Creating virtual environment..."
+        python -m venv "$venv"
+
+        activate_venv
+
+        $venv/bin/python -m pip install --upgrade pip
+        $venv/bin/python -m pip install -r requirements.txt
+        $venv/bin/python -m pip freeze > pinned.txt
     fi
 }
 
@@ -77,34 +142,13 @@ main() {
     fi
 
     # Start server if required:
-    if pgrep -x "ollama" > /dev/null; then
-        echo "Ollama is already running..."
-    else
-        echo "Starting Ollama server..."
-        ollama serve &
-        sleep 2  # Give the server a moment to start
-    fi
+    start_ollama_server
 
     # Pull model if required:
-    if ollama list | grep -q "$OLLAMA_MODEL_PULL"; then
-        echo "$OLLAMA_MODEL_PULL model already pulled..."
-    else
-        echo "Pulling model $OLLAMA_MODEL_PULL..."
-        ollama pull "$OLLAMA_MODEL_PULL"
-    fi
+    pull_ollama_model
 
-    if [[ -d ".venv" ]]; then
-        echo "Virtual environment already exists..."
-    else
-        echo "Creating virtual environment..."
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install -r requirements.txt
-    fi
-
-    # Ollama API is served on http://localhost:11434
-    # ollama run $OLLAMA_MODEL_PULL
-    # kill -9 `pgrep -x "ollama"`
+    # Create virtual environment:
+    create_venv
 }
 
 main
